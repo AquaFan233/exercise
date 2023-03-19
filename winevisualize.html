@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Three 2D Scatter Plots</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        .chart {
+            width: 450px;
+            height: 450px;
+            margin: 20px;
+            position: relative;
+            border: 2px solid #000000;
+            background-image: linear-gradient(to right, rgb(200, 200, 200) 1px, transparent 1px), 
+                              linear-gradient(to bottom, rgb(200, 200, 200) 1px, transparent 1px);
+            background-size: 50px 50px;
+            background-position: 0 0;
+        }
+    
+        .chart text {
+            font-size: 15px;
+            text-anchor: start;
+        }
+    
+        .chart-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+        }
+    
+        .selected {
+            fill: rgb(255, 140, 0) !important;
+        }
+        .title {
+            text-align: center;
+        }
+
+    </style>
+<body>
+    <div class="title">
+      <h3>Wine-visualization</h3>
+    </div>
+    <!-- D3 visualization code here -->
+  </body>
+<body>
+    
+    <div id="container" class="chart-container"></div>
+
+    <script>
+
+        // Create chart containers
+        var container = d3.select("#container")
+            .append("div")
+            .attr("class", "chart-container");
+
+
+        // Load pca data
+        const xhr = new XMLHttpRequest();
+        xhr.open('GET', 'https://raw.githubusercontent.com/AquaFan233/wine_pca.csv/main/wine_pca%20-%20%E5%89%AF%E6%9C%AC.csv', true);
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState === 4 && xhr.status === 200) {
+                const pca_data = d3.csvParse(xhr.responseText); // 解析CSV字符串为JavaScript对象或数组
+                // 在这里处理CSV数据
+
+
+                // Load tsne data
+                const xhr1 = new XMLHttpRequest();
+                xhr1.open('GET', 'https://raw.githubusercontent.com/AquaFan233/wine_pca.csv/main/wine_TSNE%20-%20%E5%89%AF%E6%9C%AC.csv', true);
+                xhr1.onreadystatechange = function () {
+                    if (xhr1.readyState === 4 && xhr1.status === 200) {
+                        const tsne_data = d3.csvParse(xhr1.responseText); // 解析CSV字符串为JavaScript对象或数组
+                        // 在这里处理CSV数据
+
+
+                        // Load mds data
+                        const xhr2 = new XMLHttpRequest();
+                        xhr2.open('GET', 'https://raw.githubusercontent.com/AquaFan233/wine_pca.csv/main/wine_MDS%20-%20%E5%89%AF%E6%9C%AC.csv', true);
+                        xhr2.onreadystatechange = function () {
+                            if (xhr2.readyState === 4 && xhr2.status === 200) {
+                                const mds_data = d3.csvParse(xhr2.responseText); // 解析CSV字符串为JavaScript对象或数组
+                                // 在这里处理CSV数据
+
+
+
+                                function highlightPoints(index) {
+                                    console.log("highlightPoints:", index)
+                                    var pca_selected = d3.selectAll("#pca circle")
+                                        .filter(d => d.index === index);
+
+                                    var tsne_selected = d3.selectAll("#tsne circle")
+                                        .filter(d => d.index === index);
+
+                                    var mds_selected = d3.selectAll("#mds circle")
+                                        .filter(d => d.index === index);
+
+                                    // Add selected class
+                                    pca_selected
+                                        .classed('selected', true)
+                                        .classed('chart circle', false)
+                                        .attr('r', 6)
+                                        .raise(); // 添加此行;
+
+                                    tsne_selected
+                                        .classed('selected', true)
+                                        .classed('chart circle', false)
+                                        .attr('r', 6)
+                                        .raise(); // 添加此行;
+
+                                    mds_selected
+                                        .classed('selected', true)
+                                        .classed('chart circle', false)
+                                        .attr('r', 6)
+                                        .raise(); // 添加此行;
+
+                                    // Unselect other points
+                                    d3.selectAll(".chart circle")
+                                        .filter(d => d.index !== index)
+                                        .classed("selected", false)
+                                        .attr('r', 3);
+
+                                        
+                                }
+
+
+
+
+                                // Create scales
+                                var xScale = d3.scaleLinear()
+                                    .domain(d3.extent(pca_data, d => parseFloat(d.x)))
+                                    .range([20, 430]);
+
+                                var yScale = d3.scaleLinear()
+                                    .domain(d3.extent(pca_data, d => parseFloat(d.y)))
+                                    .range([430, 20]);
+
+                                // Create chart
+                                var pca_chart = container.append("svg")
+                                    .attr("class", "chart")
+                                    .attr("width", 450)
+                                    .attr("height", 450)
+                                    .attr("id", "pca");
+
+                                    const colorScale = d3.scaleSequential(d3.interpolateBlues)//渐变
+                                    .domain([0, 150]);
+
+                                pca_chart.selectAll("circle")
+                                    .data(pca_data, (d, i) => { d.index = i; return i; })
+                                    .enter()
+                                    .append("circle")
+                                    .attr("cx", d => xScale(parseFloat(d.x)))
+                                    .attr("cy", d => yScale(parseFloat(d.y)))
+                                    .attr("r", 3)
+                                    .attr("fill", d => colorScale(d.index))
+                                    .on('click', function (event, d) {
+                                        console.log("pca");
+                                        console.log(d);
+                                        console.log(d.index);
+                                        console.log(xScale(d.x));
+                                        highlightPoints(d.index);
+                                    });
+
+                                pca_chart.append("text")
+                                    .attr("x", 20)
+                                    .attr("y", 20)
+                                    .text("PCA");
+
+
+
+                                // Create scales
+                                var xScale = d3.scaleLinear()
+                                    .domain(d3.extent(tsne_data, d => parseFloat(d.x)))
+                                    .range([20, 430]);
+
+                                var yScale = d3.scaleLinear()
+                                    .domain(d3.extent(tsne_data, d => parseFloat(d.y)))
+                                    .range([430, 20]);
+
+                                // Create chart
+                                var tsne_chart = container.append("svg")
+                                    .attr("class", "chart")
+                                    .attr("width", 450)
+                                    .attr("height", 450)
+                                    .attr("id", "tsne");
+
+
+                                tsne_chart.selectAll("circle")
+                                    .data(tsne_data, (d, i) => { d.index = i; return i; })
+                                    .enter()
+                                    .append("circle")
+                                    .attr("cx", d => xScale(parseFloat(d.x)))
+                                    .attr("cy", d => yScale(parseFloat(d.y)))
+                                    .attr("r", 3)
+                                    .attr("fill", d => colorScale(d.index))
+
+                                    .on('click', function (event, d) {
+
+                                        console.log("tsne");
+                                        console.log(d);
+                                        console.log(d.index);
+                                        highlightPoints(d.index);
+                                    });
+
+                                tsne_chart.append("text")
+                                    .attr("x", 20)
+                                    .attr("y", 20)
+                                    .text("t-SNE");
+                                // Create scales
+                                var xScale = d3.scaleLinear()
+                                    .domain(d3.extent(mds_data, d => parseFloat(d.x)))
+                                    .range([20, 430]);
+
+                                var yScale = d3.scaleLinear()
+                                    .domain(d3.extent(mds_data, d => parseFloat(d.y)))
+                                    .range([430, 20]);
+
+                                // Create chart
+                                var mds_chart = container.append("svg")
+                                    .attr("class", "chart")
+                                    .attr("width", 450)
+                                    .attr("height", 450)
+                                    .attr("id", "mds");
+
+                                mds_chart.selectAll("circle")
+                                    .data(mds_data, (d, i) => { d.index = i; return i; }).enter()
+                                    .append("circle")
+                                    .attr("cx", d => xScale(parseFloat(d.x)))
+                                    .attr("cy", d => yScale(parseFloat(d.y)))
+                                    .attr("r", 3)
+                                    .attr("fill", d => colorScale(d.index))
+
+                                    .on('click', function (event, d) {
+
+
+                                        console.log("mds");
+                                        console.log(d);
+                                        console.log(d.index);
+                                        highlightPoints(d.index);
+                                    });
+                                mds_chart.append("text")
+                                    .attr("x", 20)
+                                    .attr("y", 20)
+                                    .text("MDS");
+                                    const svg = d3.select("svg");
+
+                                const legend = svg.append("g")
+                                    .attr("class", "legend")
+                                    .attr("transform", "translate(10, 20)");
+
+
+                                
+
+                            }
+                        };
+                        xhr2.send();
+
+                    }
+                };
+                xhr1.send();
+
+            }
+        };
+        xhr.send();
+
+        const svg = d3.select("body")
+        .append("svg")
+        .attr("width", 500)
+        .attr("height", 500);
+
+        var linearGradient = svg                  //heatmap的话不显示任何东西
+        .append("linearGradient")
+        .attr("id","linear-gradient");
+
+//legend
+                                const gradient = legend.append("defs")
+                                    .append("linearGradient")
+                                    .attr("id", "gradient")
+                                    .attr("x1", "0%")
+                                    .attr("y1", "0%")
+                                    .attr("x2", "100%")
+                                    .attr("y2", "0%");
+
+                                gradient.selectAll("stop")
+                                    .data(d3.range(0, 1.25, 0.25))
+                                    .enter().append("stop")
+                                    .attr("stop-color", d => colorScale(d * 150))
+                                    .attr("offset", d => `${d * 100}%`);
+
+                                legend.append("rect")
+                                    .attr("x", 0)
+                                    .attr("y", 0)
+                                    .attr("width", 280)
+                                    .attr("height", 15)
+                                    .style("fill", "url(#gradient)");
+
+                                const axisScale = d3.scaleLinear()
+                                    .range([0, 280])
+                                    .domain([0, 150]);
+
+                                const axisBottom = d3.axisBottom(axisScale)
+                                    .tickValues([0, 30, 60, 90, 120, 150])
+                                    .tickFormat(d => `${d}`);
+
+                                legend.append("g")
+                                    .attr("class", "axis")
+                                    .attr("transform", "translate(0, 15)")
+                                    .call(axisBottom);
+
+
+    </script>
+
+</body>
+
+</html>
